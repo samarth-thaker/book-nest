@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/src/services/text_formatter.dart';
 
 class Inputfield extends StatelessWidget {
   final TextEditingController controller;
@@ -10,7 +11,7 @@ class Inputfield extends StatelessWidget {
     required this.hintText,
     this.obscureText = false,
     //this.keyboardType = TextInputType.number,
-    Key? key,
+    Key? key, required TextInputType keyboardType, required String prefixText, required List<TextInputFormatter> inputFormatters, required String? Function(dynamic value) validator,
   }) : super(key: key);
 
   @override

@@ -19,6 +19,7 @@ class _OnboardingState extends State<Onboarding> {
   final List<Widget> _screens = [
     LibraryTab(),
     AddBookTab(),
+    //LentBooksScreen(),
     LendingTab(),
   ];
 

@@ -40,10 +40,10 @@ class _LibraryTabState extends State<LibraryTab> {
     final _filteredBooks = bookList.where((book) {
       final title = book.title.toLowerCase();
       final author = book.author.toLowerCase();
-      final genre = book.genre.toLowerCase();
+      final genre = book.genre?.toLowerCase();
       return title.contains(_searchQuery) ||
           author.contains(_searchQuery) ||
-          genre.contains(_searchQuery);
+          genre!.contains(_searchQuery);
     }).toList();
 
     return Scaffold(
@@ -51,7 +51,7 @@ class _LibraryTabState extends State<LibraryTab> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SearchField(controller: _searchController),
+            SearchField(controller: _searchController, onChanged: (value) {  },),
             const SizedBox(height: 16),
             Expanded(
               child: _filteredBooks.isEmpty
@@ -60,7 +60,10 @@ class _LibraryTabState extends State<LibraryTab> {
                       itemCount: _filteredBooks.length,
                       itemBuilder: (ctx, index) {
                         final book = _filteredBooks[index];
-                        return CustomBookTile(bookTitle: book.title, author: book.author, genre: book.genre);
+                        return CustomBookTile(/* bookTitle: book.title, author: book.author, genre: book.genre */
+                        book: book,
+                        showLendingInfo: true,
+                        onReturn: (){},);
                       },
                     ),
             ),

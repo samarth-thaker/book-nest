@@ -13,14 +13,13 @@ void main() async {
 
   await Hive.initFlutter();
   Hive.registerAdapter(BookAdapter());
-  Hive.registerAdapter(LentBookAdapter()); 
+  
   await Hive.openBox<Book>('books');
-  await Hive.openBox<LentBook>('lentBooks'); 
-
+  
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(
+         ChangeNotifierProvider(
             create: (_) => LendingProvider()..loadLentBooksFromHive()),
         ChangeNotifierProvider(
             create: (_) => BookProvider()..loadBooksFromHive()),

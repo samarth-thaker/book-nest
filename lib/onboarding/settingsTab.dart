@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:booknest/providers/bookProvider.dart';
-import 'package:booknest/providers/lendingProvider.dart';
+//import 'package:booknest/providers/lendingProvider.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,7 +31,7 @@ class _SettingsTabState extends State<SettingsTab> {
 
   void _exportBooks(BuildContext context) {
     final books = Provider.of<BookProvider>(context, listen: false).books;
-    final lentBooks = Provider.of<LendingProvider>(context, listen: false).lentBooks;
+    //final lentBooks = Provider.of<LendingProvider>(context, listen: false).lentBooks;
 
     String exportText = '--- My Library ---\n';
     for (var book in books) {
@@ -39,9 +39,9 @@ class _SettingsTabState extends State<SettingsTab> {
     }
 
     exportText += '\n--- Lent Books ---\n';
-    for (var lent in lentBooks) {
+    /* for (var lent in lentBooks) {
       exportText += '${lent.title} to ${lent.lentTo} [${lent.genre}]\n';
-    }
+     }*/
 
     Share.share(exportText);
   }
