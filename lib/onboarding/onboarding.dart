@@ -1,4 +1,5 @@
 import 'package:booknest/onboarding/addBookTab.dart';
+import 'package:booknest/onboarding/borrowedBookScreen.dart';
 import 'package:booknest/onboarding/lendingTab.dart';
 import 'package:booknest/onboarding/libraryTab.dart';
 import 'package:booknest/onboarding/settingsTab.dart';
@@ -14,13 +15,13 @@ class Onboarding extends StatefulWidget {
 class _OnboardingState extends State<Onboarding> {
   int _selectedIndex = 0;
 
-  final List<String> _titles = ['Your Library', 'Add a Book', 'Lent Books'];
+  final List<String> _titles = ['Your Library', 'Add a Book', 'Lent Books', 'Borrowed Books'];
 
   final List<Widget> _screens = [
     LibraryTab(),
     AddBookTab(),
-    //LentBooksScreen(),
     LendingTab(),
+    BorrowedBooksScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -63,10 +64,12 @@ class _OnboardingState extends State<Onboarding> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Library'),
           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add Book'),
-          BottomNavigationBarItem(icon: Icon(Icons.swap_horiz), label: 'Lending'),
+          BottomNavigationBarItem(icon: Icon(Icons.swap_horiz), label: 'Lend'),
+          BottomNavigationBarItem(icon: Icon(Icons.handshake), label:'Borrow'),
         ],
       ),
     );

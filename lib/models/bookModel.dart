@@ -176,4 +176,6 @@ enum BookStatus {
   @HiveField(1)
   lent,
 
+  @HiveField(2)
+  borrowed,
 } 

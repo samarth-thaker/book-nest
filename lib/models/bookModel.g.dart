@@ -84,6 +84,8 @@ class BookStatusAdapter extends TypeAdapter<BookStatus> {
         return BookStatus.owned;
       case 1:
         return BookStatus.lent;
+      case 2:
+        return BookStatus.borrowed;
       default:
         return BookStatus.owned;
     }
@@ -97,6 +99,9 @@ class BookStatusAdapter extends TypeAdapter<BookStatus> {
         break;
       case BookStatus.lent:
         writer.writeByte(1);
+        break;
+      case BookStatus.borrowed:
+        writer.writeByte(2);
         break;
     }
   }
