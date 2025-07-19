@@ -114,6 +114,7 @@ class _AddBookTabState extends State<AddBookTab> {
     }
 
     final book = Book(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _bookNameController.text.trim(),
       author: _authorNameController.text.trim(),
       genre: _selectedGenre ?? 'Other',
@@ -214,7 +215,7 @@ class _AddBookTabState extends State<AddBookTab> {
               const SizedBox(height: 16),
               Inputfield(
                 controller: _bookNameController,
-                hintText: 'Book Name *',
+                hintText: 'Book Name ',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter book name';
@@ -228,7 +229,7 @@ class _AddBookTabState extends State<AddBookTab> {
               const SizedBox(height: 16),
               Inputfield(
                 controller: _authorNameController,
-                hintText: 'Author *',
+                hintText: 'Author ',
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter author name';
@@ -284,7 +285,9 @@ class _AddBookTabState extends State<AddBookTab> {
                       keyboardType: TextInputType.text,
                       inputFormatters: [],
                       prefixText: '',
-                      validator: (value) {},
+                      validator: (value) {
+                        return null;
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -298,7 +301,17 @@ class _AddBookTabState extends State<AddBookTab> {
                         LengthLimitingTextInputFormatter(4),
                       ],
                       prefixText: '',
-                      validator: (value) {},
+                      validator: (value) {
+                        final year = int.parse(value);
+                        if (value.length != 4) {
+                          return 'Year must be 4 digits';
+                        }
+                        final currentYear = DateTime.now().year;
+                        if (year > currentYear || year < 2000) {
+                          return 'The year should be between 2000 and $currentYear';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -309,13 +322,13 @@ class _AddBookTabState extends State<AddBookTab> {
               const SizedBox(height: 32),
               Row(
                 children: [
-                   Expanded(
+                  Expanded(
                     child: Custombutton(
                       onTap: _clearForm,
                       action: 'Clear Form',
                       buttonWidth: double.infinity,
                     ),
-                  ), 
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Custombutton(

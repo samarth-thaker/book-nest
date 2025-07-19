@@ -14,7 +14,7 @@ class CustomBookTile extends StatelessWidget {
     super.key,
     required this.book,
     this.onReturn,
-    this.showLendingInfo = false,
+    this.showLendingInfo = false, required bool showStatus,
   });
 
   Future<void> _showOpenLibraryInfo(BuildContext context, String title, String author) async {

@@ -10,13 +10,16 @@ class BookProvider with ChangeNotifier {
   final Box<Book> _box = Hive.box<Book>('books');
 
   void loadBooksFromHive() {
-    _books.clear();
+    _books.clear(); // maybe the cause of issue
     _books.addAll(_box.values);
+    print('Loaded ${_books.length} books from hive');
     notifyListeners();
   }
 
   void addBook(Book book) {
-    _box.add(book);
+    final int newKey = _box.length; //or DateTime.now().miliSecondsSinceEpoch
+    _box.put(/* book.id */ newKey, book); // added on 19/07 may solve
+    // _box.add(book);
     _books.add(book);
     notifyListeners();
   }
@@ -42,7 +45,7 @@ class BookProvider with ChangeNotifier {
   }
 
   void clearBooks() {
-    _box.clear();
+    //_box.clear();
     _books.clear();
     notifyListeners();
   }
@@ -60,9 +63,12 @@ class BookProvider with ChangeNotifier {
   List<Book> get availableBooks {
     return getBooksByStatus(BookStatus.owned);
   }
-  Future <void>lendBook(Book book, String lendToPersonName, DateTime expectedReturnDate)async{
+
+  Future<void> lendBook(
+      Book book, String lendToPersonName, DateTime expectedReturnDate) async {
     await LendingService.lendBook(book, lendToPersonName, expectedReturnDate);
   }
+
   List<Book> searchBooks(String query) {
     if (query.isEmpty) return _books;
 
@@ -77,20 +83,22 @@ class BookProvider with ChangeNotifier {
   List<Book> get overdueBooks {
     return lentBooks.where((book) => book.isOverdue).toList();
   }
+
   List<Book> get borrowedBooks {
-  return getBooksByStatus(BookStatus.borrowed);
-}
+    return getBooksByStatus(BookStatus.borrowed);
+  }
 
-Future<void> markAsBorrowed(Book book, String borrowedFrom, DateTime expectedReturnDate) async {
-  final updatedBook = book.copyWith(
-    status: BookStatus.borrowed,
-    lentToPersonName: borrowedFrom, 
-    lentDate: DateTime.now(),
-    expectedReturnDate: expectedReturnDate,
-  );
+  Future<void> markAsBorrowed(
+      Book book, String borrowedFrom, DateTime expectedReturnDate) async {
+    final updatedBook = book.copyWith(
+      status: BookStatus.borrowed,
+      lentToPersonName: borrowedFrom,
+      lentDate: DateTime.now(),
+      expectedReturnDate: expectedReturnDate,
+    );
 
-  updateBook(updatedBook);
-}
+    updateBook(updatedBook);
+  }
 
   int get totalBooks => _books.length;
 

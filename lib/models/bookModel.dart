@@ -22,9 +22,6 @@ class Book extends HiveObject {
   @HiveField(5)
   final DateTime? purchaseDate;
 
-  /* @HiveField(6)
-  final double? purchasePrice; */
-
   @HiveField(7)
   final String? coverImagePath; // Path to local image file
 
@@ -38,20 +35,20 @@ class Book extends HiveObject {
   final DateTime dateAdded;
 
   @HiveField(11)
-   String? lentToPersonName; 
+  String? lentToPersonName;
 
   @HiveField(12)
-   DateTime? lentDate;
+  DateTime? lentDate;
 
   @HiveField(13)
   DateTime? expectedReturnDate;
-
-  
-
+  @HiveField(14)
+  final String id;
   Book({
     required this.title,
     required this.author,
     required this.genre,
+    required this.id,
     this.isbn,
     //this.rating,
     this.purchaseDate,
@@ -63,25 +60,24 @@ class Book extends HiveObject {
     this.lentToPersonName,
     this.lentDate,
     this.expectedReturnDate,
-   // this.publisher,
+    // this.publisher,
     //this.pageCount,
-   // this.publicationYear,
+    // this.publicationYear,
   }) : dateAdded = dateAdded ?? DateTime.now();
 
-  
   bool get isLent => status == BookStatus.lent;
   bool get isAvailable => status == BookStatus.owned;
   //bool get isWishlist => status == BookStatus.wishlist;
   //bool get hasRating => rating != null && rating! > 0;
-  bool get hasCoverImage => coverImagePath != null && coverImagePath!.isNotEmpty;
-  bool get isOverdue => 
-    isLent && 
-    expectedReturnDate != null && 
-    DateTime.now().isAfter(expectedReturnDate!);
+  bool get hasCoverImage =>
+      coverImagePath != null && coverImagePath!.isNotEmpty;
+  bool get isOverdue =>
+      isLent &&
+      expectedReturnDate != null &&
+      DateTime.now().isAfter(expectedReturnDate!);
 
-  get id => null;
+  //get id => null;
 
-  
   Book copyWith({
     String? title,
     String? author,
@@ -106,9 +102,9 @@ class Book extends HiveObject {
       author: author ?? this.author,
       genre: genre ?? this.genre,
       isbn: isbn ?? this.isbn,
-     // rating: rating ?? this.rating,
+      // rating: rating ?? this.rating,
       purchaseDate: purchaseDate ?? this.purchaseDate,
-      
+      id: id,
       coverImagePath: coverImagePath ?? this.coverImagePath,
       status: status ?? this.status,
       personalNotes: personalNotes ?? this.personalNotes,
@@ -119,7 +115,6 @@ class Book extends HiveObject {
     );
   }
 
-  
   Book lendTo(String personName, {DateTime? returnDate}) {
     return copyWith(
       status: BookStatus.lent,
@@ -129,7 +124,6 @@ class Book extends HiveObject {
     );
   }
 
-  
   Book returnBook() {
     return copyWith(
       status: BookStatus.owned,
@@ -139,16 +133,15 @@ class Book extends HiveObject {
     );
   }
 
-  
   Map<String, dynamic> toMap() {
     return {
       'title': title,
       'author': author,
       'genre': genre,
       'isbn': isbn,
-     // 'rating': rating,
+      // 'rating': rating,
       'purchaseDate': purchaseDate?.toIso8601String(),
-     // 'purchasePrice': purchasePrice,
+      // 'purchasePrice': purchasePrice,
       'coverImagePath': coverImagePath,
       'status': status.index,
       'personalNotes': personalNotes,
@@ -156,9 +149,6 @@ class Book extends HiveObject {
       'lentToPersonName': lentToPersonName,
       'lentDate': lentDate?.toIso8601String(),
       'expectedReturnDate': expectedReturnDate?.toIso8601String(),
-     // 'publisher': publisher,
-     // 'pageCount': pageCount,
-     // 'publicationYear': publicationYear,
     };
   }
 
@@ -172,10 +162,10 @@ class Book extends HiveObject {
 enum BookStatus {
   @HiveField(0)
   owned,
-  
+
   @HiveField(1)
   lent,
 
   @HiveField(2)
   borrowed,
-} 
+}

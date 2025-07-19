@@ -29,7 +29,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     'Science',
     'Fantasy',
     'Finance'
-    'Mystery',
+        'Mystery',
     'Romance',
     'Thriller',
     'History',
@@ -39,7 +39,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     'Technology',
     'Other'
   ];
-  
+
   DateTime? _expectedReturnDate;
   Future<void> _selectReturnDate() async {
     final DateTime? picked = await showDatePicker(
@@ -61,7 +61,6 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     _authorController.clear();
     _bookTitleController.clear();
     setState(() {
-      
       _expectedReturnDate = null;
     });
   }
@@ -78,6 +77,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     }
 
     final updatedBook = Book(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _bookTitleController.text,
         author: _authorController.text,
         genre: _selectedGenre.toString());
@@ -105,6 +105,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     _clearForm();
     Navigator.pop(context);
   }
+
   void _openBorrowedForm() {
     _clearForm();
     showModalBottomSheet(

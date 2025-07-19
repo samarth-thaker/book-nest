@@ -55,15 +55,31 @@ class _LibraryTabState extends State<LibraryTab> {
             const SizedBox(height: 16),
             Expanded(
               child: _filteredBooks.isEmpty
-                  ? const Center(child: Text("No books found."))
+                  ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.library_books_outlined,
+                            size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text("No books found.",
+                            style:
+                                TextStyle(fontSize: 16, color: Colors.grey)),
+                        SizedBox(height: 8),
+                        Text("Tap + to add a book to your library",
+                            style:
+                                TextStyle(fontSize: 14, color: Colors.grey)),
+                      ],
+                    ),
+                  )
                   : ListView.builder(
                       itemCount: _filteredBooks.length,
                       itemBuilder: (ctx, index) {
                         final book = _filteredBooks[index];
-                        return CustomBookTile(/* bookTitle: book.title, author: book.author, genre: book.genre */
+                        return CustomBookTile(
                         book: book,
                         showLendingInfo: true,
-                        onReturn: (){},);
+                        onReturn: (){}, showStatus: true,);
                       },
                     ),
             ),

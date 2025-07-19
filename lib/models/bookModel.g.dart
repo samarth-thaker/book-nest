@@ -20,6 +20,7 @@ class BookAdapter extends TypeAdapter<Book> {
       title: fields[0] as String,
       author: fields[1] as String,
       genre: fields[2] as String,
+      id: fields[14] as String,
       isbn: fields[3] as String?,
       purchaseDate: fields[5] as DateTime?,
       coverImagePath: fields[7] as String?,
@@ -35,7 +36,7 @@ class BookAdapter extends TypeAdapter<Book> {
   @override
   void write(BinaryWriter writer, Book obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.title)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class BookAdapter extends TypeAdapter<Book> {
       ..writeByte(12)
       ..write(obj.lentDate)
       ..writeByte(13)
-      ..write(obj.expectedReturnDate);
+      ..write(obj.expectedReturnDate)
+      ..writeByte(14)
+      ..write(obj.id);
   }
 
   @override
