@@ -7,19 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Hive.initFlutter();
   Hive.registerAdapter(BookAdapter());
-  
+  Hive.registerAdapter(BookStatusAdapter()); // Did not addd this.
   await Hive.openBox<Book>('books');
-  
+
   runApp(
     MultiProvider(
       providers: [
-         ChangeNotifierProvider(
+        ChangeNotifierProvider(
             create: (_) => LendingProvider()..loadLentBooksFromHive()),
         ChangeNotifierProvider(
             create: (_) => BookProvider()..loadBooksFromHive()),
@@ -28,7 +28,6 @@ void main() async {
     ),
   );
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

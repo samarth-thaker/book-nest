@@ -15,7 +15,12 @@ class Onboarding extends StatefulWidget {
 class _OnboardingState extends State<Onboarding> {
   int _selectedIndex = 0;
 
-  final List<String> _titles = ['Your Library', 'Add a Book', 'Lent Books', 'Borrowed Books'];
+  final List<String> _titles = [
+    'Your Library',
+    'Add a Book',
+    'Lent Books',
+    'Borrowed Books'
+  ];
 
   final List<Widget> _screens = [
     LibraryTab(),
@@ -41,6 +46,11 @@ class _OnboardingState extends State<Onboarding> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/userProfile');
+            },
+            icon: Icon(Icons.person_2_rounded)),
         title: Text(
           _titles[_selectedIndex],
           style: const TextStyle(
@@ -66,10 +76,11 @@ class _OnboardingState extends State<Onboarding> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Library'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.library_books), label: 'Library'),
           BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Add Book'),
           BottomNavigationBarItem(icon: Icon(Icons.swap_horiz), label: 'Lend'),
-          BottomNavigationBarItem(icon: Icon(Icons.handshake), label:'Borrow'),
+          BottomNavigationBarItem(icon: Icon(Icons.handshake), label: 'Borrow'),
         ],
       ),
     );
