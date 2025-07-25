@@ -75,33 +75,7 @@ class BookProvider with ChangeNotifier {
     updateBook(updatedBook);
   }
 
-  /* void markBorrowedBookAsReturned(Book book) {
-    final borrowedBookIndex = _borrowedBooks.indexWhere((b) => b.id == book.id);
-
-    if (borrowedBookIndex != -1) {
-      // Remove from borrowed books list
-      _borrowedBooks.removeAt(borrowedBookIndex);
-
-      // Reset the book's borrowed status
-      book.borrowed = false;
-      book.borrowedFromPersonName = null;
-      book.borrowedDate = null;
-      book.expectedReturnDate = null;
-
-      // Add back to available books if it was originally yours
-      // (assuming you have a way to track original ownership)
-      if (book.isOwned == true) {
-        _books.add(book);
-      }
-
-      // Notify listeners to update the UI
-      notifyListeners();
-
-      // Optional: Save to persistent storage
-      _saveBooksToStorage();
-    }
-  } */
-
+  
   int get totalBooks => _books.length;
   int getBookCountByStatus(BookStatus status) =>
       getBooksByStatus(status).length;
