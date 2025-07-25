@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:booknest/providers/bookProvider.dart';
-//import 'package:booknest/providers/lendingProvider.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -31,18 +30,25 @@ class _SettingsTabState extends State<SettingsTab> {
 
   void _exportBooks(BuildContext context) {
     final books = Provider.of<BookProvider>(context, listen: false).books;
-    //final lentBooks = Provider.of<LendingProvider>(context, listen: false).lentBooks;
-
+    final lentBooks =
+        Provider.of<BookProvider>(context, listen: false).lentBooks;
+    final borrowedBooks =
+        Provider.of<BookProvider>(context, listen: false).borrowedBooks;
     String exportText = '--- My Library ---\n';
     for (var book in books) {
       exportText += '${book.title} by ${book.author} [${book.genre}]\n';
     }
 
     exportText += '\n--- Lent Books ---\n';
-    /* for (var lent in lentBooks) {
-      exportText += '${lent.title} to ${lent.lentTo} [${lent.genre}]\n';
-     }*/
-
+    for (var lent in lentBooks) {
+      exportText +=
+          '${lent.title} to ${lent.lentToPersonName} [${lent.genre}]\n';
+    }
+    exportText += '\n--- Borrowed Books ---\n';
+    for (var borrowed in borrowedBooks) {
+      exportText +=
+          '${borrowed.title} from ${borrowed.borrowedFromPersonName} [${borrowed.genre}]\n';
+    }
     Share.share(exportText);
   }
 
@@ -125,7 +131,8 @@ class _SettingsTabState extends State<SettingsTab> {
       appBar: AppBar(
         title: const Text(
           "Settings",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+          style: TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -138,7 +145,8 @@ class _SettingsTabState extends State<SettingsTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Export Your Data", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text("Export Your Data",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               ElevatedButton.icon(
                 onPressed: () => _exportBooks(context),
@@ -146,14 +154,16 @@ class _SettingsTabState extends State<SettingsTab> {
                 label: const Text("Export Books & Lending Data"),
               ),
               const SizedBox(height: 24),
-              const Text("Personal Notes / Reviews", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text("Personal Notes / Reviews",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               TextField(
                 controller: _noteController,
                 maxLines: 5,
                 decoration: InputDecoration(
                   hintText: "Write your thoughts, reviews, or anything else...",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
               ),
               const SizedBox(height: 12),
@@ -161,14 +171,19 @@ class _SettingsTabState extends State<SettingsTab> {
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
                   onPressed: _saveNote,
-                  child: Text(_editingNoteKey != null ? "Update Note" : "Save Note"),
+                  child: Text(
+                      _editingNoteKey != null ? "Update Note" : "Save Note"),
                 ),
               ),
               const SizedBox(height: 24),
               if (notes.isNotEmpty)
-                const Text("Saved Notes", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text("Saved Notes",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ...notes.entries.map((entry) => _buildReviewCard(entry.key, entry.value)).toList(),
+              ...notes.entries
+                  .map((entry) => _buildReviewCard(entry.key, entry.value))
+                  .toList(),
             ],
           ),
         ),

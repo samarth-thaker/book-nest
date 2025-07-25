@@ -9,15 +9,18 @@ class CustomBookTile extends StatelessWidget {
   final Book book;
   final VoidCallback? onReturn;
   final bool showLendingInfo;
-
+  final bool showBorrowInfo;
   const CustomBookTile({
     super.key,
     required this.book,
     this.onReturn,
-    this.showLendingInfo = false, required bool showStatus,
+    this.showLendingInfo = false,
+    this.showBorrowInfo = false,
+    required bool showStatus,
   });
 
-  Future<void> _showOpenLibraryInfo(BuildContext context, String title, String author) async {
+  Future<void> _showOpenLibraryInfo(
+      BuildContext context, String title, String author) async {
     showDialog(
       context: context,
       builder: (ctx) => const AlertDialog(
@@ -31,7 +34,8 @@ class CustomBookTile extends StatelessWidget {
     try {
       final queryTitle = Uri.encodeComponent(title);
       final queryAuthor = Uri.encodeComponent(author);
-      final searchUrl = 'https://openlibrary.org/search.json?title=$queryTitle&author=$queryAuthor';
+      final searchUrl =
+          'https://openlibrary.org/search.json?title=$queryTitle&author=$queryAuthor';
       final searchRes = await http.get(Uri.parse(searchUrl));
 
       if (searchRes.statusCode == 200) {
@@ -51,7 +55,8 @@ class CustomBookTile extends StatelessWidget {
               title: Text(title),
               content: Text(detailData['description'] is String
                   ? detailData['description']
-                  : detailData['description']?['value'] ?? 'No description available.'),
+                  : detailData['description']?['value'] ??
+                      'No description available.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
@@ -160,6 +165,40 @@ class CustomBookTile extends StatelessWidget {
                   ),
                 ),
             ],
+            if (showBorrowInfo && book.isBorrowed)...[
+                const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Borrowed from ${book.borrowedFromPersonName}',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                book.lentDate != null
+                    ? 'Borrowed $daysSinceLent days ago'
+                    : 'Recently borrowed',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+              if (book.expectedReturnDate != null)
+                Text(
+                  isOverdue
+                      ? 'Overdue since ${DateFormat('dd/MM/yyyy').format(book.expectedReturnDate!)}'
+                      : 'Due: ${DateFormat('dd/MM/yyyy').format(book.expectedReturnDate!)}',
+                  style: TextStyle(
+                    color: isOverdue ? Colors.red : Colors.orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ]
           ],
         ),
         trailing: showLendingInfo && book.isLent
@@ -168,7 +207,8 @@ class CustomBookTile extends StatelessWidget {
                 children: [
                   if (isOverdue)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.red.shade100,
                         borderRadius: BorderRadius.circular(12),
@@ -206,7 +246,8 @@ class CustomBookTile extends StatelessWidget {
               )
             : IconButton(
                 icon: const Icon(Icons.arrow_forward_ios, size: 16),
-                onPressed: () => _showOpenLibraryInfo(context, book.title, book.author),
+                onPressed: () =>
+                    _showOpenLibraryInfo(context, book.title, book.author),
                 tooltip: 'Fetch Book Info',
               ),
         isThreeLine: showLendingInfo && book.isLent,

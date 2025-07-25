@@ -36,7 +36,7 @@ class _LibraryTabState extends State<LibraryTab> {
   Widget build(BuildContext context) {
     final bookList = Provider.of<BookProvider>(context).books;
 
-    // Filter the list based on the search query
+    
     final _filteredBooks = bookList.where((book) {
       final title = book.title.toLowerCase();
       final author = book.author.toLowerCase();
@@ -79,6 +79,7 @@ class _LibraryTabState extends State<LibraryTab> {
                         return CustomBookTile(
                         book: book,
                         showLendingInfo: true,
+                        showBorrowInfo: true,
                         onReturn: (){}, showStatus: true,);
                       },
                     ),

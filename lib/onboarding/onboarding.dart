@@ -46,11 +46,6 @@ class _OnboardingState extends State<Onboarding> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/userProfile');
-            },
-            icon: Icon(Icons.person_2_rounded)),
         title: Text(
           _titles[_selectedIndex],
           style: const TextStyle(

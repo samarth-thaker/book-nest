@@ -15,7 +15,8 @@ class Inputfield extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) => TextFormField(
+  Widget build(BuildContext context) {
+    return TextFormField(
         controller: controller,
         //keyboardType: keyboardType,
         decoration: InputDecoration(
@@ -25,5 +26,6 @@ class Inputfield extends StatelessWidget {
            
           ),
         ),
-      );
+      ); 
+  } 
 }

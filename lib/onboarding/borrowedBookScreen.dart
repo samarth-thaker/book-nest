@@ -16,11 +16,14 @@ class BorrowedBooksScreen extends StatefulWidget {
   State<BorrowedBooksScreen> createState() => _BorrowedBooksScreenState();
 }
 
-class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
+class _BorrowedBooksScreenState extends State<BorrowedBooksScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _personController = TextEditingController();
   final TextEditingController _authorController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _bookTitleController = TextEditingController();
+
   String? _selectedGenre;
   final List<String> _genres = [
     'Fiction',
@@ -28,8 +31,8 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     'Biography',
     'Science',
     'Fantasy',
-    'Finance'
-        'Mystery',
+    'Finance',
+    'Mystery',
     'Romance',
     'Thriller',
     'History',
@@ -41,6 +44,44 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
   ];
 
   DateTime? _expectedReturnDate;
+  String _searchQuery = '';
+  Book? _selectedBook;
+
+  Book? _justBorrowedBook;
+  late AnimationController _tileAnimController;
+  late Animation<double> _tileFadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _tileAnimController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _tileFadeAnimation = CurvedAnimation(
+      parent: _tileAnimController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _showBorrowedBookTile(Book book) async {
+    setState(() {
+      _justBorrowedBook = book;
+    });
+    _tileAnimController.forward();
+
+    await Future.delayed(const Duration(seconds: 3));
+    if (mounted) {
+      _tileAnimController.reverse().then((_) {
+        if (mounted) {
+          setState(() {
+            _justBorrowedBook = null;
+          });
+        }
+      });
+    }
+  }
+
   Future<void> _selectReturnDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -60,28 +101,75 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     _personController.clear();
     _authorController.clear();
     _bookTitleController.clear();
+    _searchController.clear();
     setState(() {
       _expectedReturnDate = null;
+      _selectedGenre = null;
+      _selectedBook = null;
+      _searchQuery = '';
     });
   }
 
   void _borrowBook() {
-    if (_authorController.text.trim().isEmpty ||
-        _bookTitleController.text.trim().isEmpty ||
-        _personController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select a book and enter person name')),
-      );
-      return;
-    }
+    bool usingManualEntry = _bookTitleController.text.trim().isNotEmpty ||
+        _authorController.text.trim().isNotEmpty;
 
-    final updatedBook = Book(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _bookTitleController.text,
-        author: _authorController.text,
-        genre: _selectedGenre.toString());
-    Provider.of<BookProvider>(context, listen: false).updateBook(updatedBook);
+    if (usingManualEntry) {
+      if (_authorController.text.trim().isEmpty ||
+          _bookTitleController.text.trim().isEmpty ||
+          _personController.text.trim().isEmpty ||
+          _selectedGenre == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please fill all fields including genre')),
+        );
+        return;
+      }
+
+      final newBook = Book(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _bookTitleController.text.trim(),
+          author: _authorController.text.trim(),
+          genre: _selectedGenre!);
+
+      final borrowedBook = newBook.borrowedFrom(
+        _personController.text.trim(),
+        returnDate: _expectedReturnDate,
+      );
+
+      Provider.of<BookProvider>(context, listen: false).addBook(borrowedBook);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('${_bookTitleController.text} borrowed successfully!')),
+      );
+
+      _showBorrowedBookTile(borrowedBook);
+    } else {
+      if (_selectedBook == null || _personController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please select a book and enter person name')),
+        );
+        return;
+      }
+
+      final borrowedBook = _selectedBook!.borrowedFrom(
+        _personController.text.trim(),
+        returnDate: _expectedReturnDate,
+      );
+
+      Provider.of<BookProvider>(context, listen: false)
+          .updateBook(borrowedBook);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('${_selectedBook!.title} borrowed successfully!')),
+      );
+
+      _showBorrowedBookTile(borrowedBook);
+    }
 
     Future.delayed(const Duration(milliseconds: 300), () {
       if (_scrollController.hasClients) {
@@ -93,17 +181,56 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('${_bookTitleController.text} borrowed successfully!')),
-    );
-    print("Borrowed book status: ${updatedBook.status}");
-    print("All books: ");
-    Provider.of<BookProvider>(context, listen: false).books.forEach((b) {
-      print("${b.title} - ${b.status}");
-    });
     _clearForm();
     Navigator.pop(context);
+  }
+
+  Widget _buildSelectableBookTile(
+      Book book, bool isSelected, Function(Book) onTap) {
+    return GestureDetector(
+      onTap: () => onTap(book),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? Colors.blue.shade50 : Colors.white,
+        ),
+        child: ListTile(
+          leading: book.hasCoverImage
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.file(
+                    File(book.coverImagePath!),
+                    width: 40,
+                    height: 50,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : const Icon(Icons.book, color: Colors.blueAccent),
+          title: Text(
+            book.title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: isSelected ? Colors.blue.shade700 : Colors.black,
+            ),
+          ),
+          subtitle: Text(
+            "${book.author} • ${book.genre ?? 'Unknown Genre'}",
+            style: TextStyle(
+              color: isSelected ? Colors.blue.shade600 : Colors.grey.shade600,
+            ),
+          ),
+          trailing: isSelected
+              ? const Icon(Icons.check_circle, color: Colors.blue)
+              : const Icon(Icons.arrow_forward_ios, size: 16),
+        ),
+      ),
+    );
   }
 
   void _openBorrowedForm() {
@@ -114,9 +241,22 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final bookProvider =
+                Provider.of<BookProvider>(context, listen: false);
+            final ownedBooks = bookProvider.books
+                .where((book) => book.status == BookStatus.owned)
+                .where((book) =>
+                    book.title
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase()) ||
+                    book.author
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase()))
+                .toList();
+
             return Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+                maxHeight: MediaQuery.of(ctx).size.height * 0.85,
               ),
               child: Padding(
                 padding: EdgeInsets.only(
@@ -136,61 +276,204 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
-                      Inputfield(
-                          controller: _bookTitleController,
-                          hintText: 'Book Name',
+
+                      // Tab-like selection for input method
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    _clearFormFields();
+                                  });
+                                },
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: (_selectedBook == null &&
+                                                _bookTitleController
+                                                    .text.isEmpty) ||
+                                            _bookTitleController.text.isNotEmpty
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Add New Book',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: (_selectedBook == null &&
+                                                  _bookTitleController
+                                                      .text.isEmpty) ||
+                                              _bookTitleController
+                                                  .text.isNotEmpty
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setModalState(() {
+                                    _bookTitleController.clear();
+                                    _authorController.clear();
+                                    _selectedGenre = null;
+                                  });
+                                },
+                                child: Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _selectedBook != null
+                                        ? Colors.blue
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'From Library',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: _selectedBook != null
+                                          ? Colors.white
+                                          : Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Show either manual entry or book selection
+                      if (_selectedBook == null &&
+                          (_bookTitleController.text.isNotEmpty ||
+                              _authorController.text.isEmpty &&
+                                  _selectedGenre == null)) ...[
+                        // Manual entry fields
+                        Inputfield(
+                            controller: _bookTitleController,
+                            hintText: 'Book Name',
+                            keyboardType: TextInputType.text,
+                            prefixText: '',
+                            inputFormatters: const [],
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter book name';
+                              }
+                              return null;
+                            }),
+                        const SizedBox(height: 16),
+                        Inputfield(
+                          controller: _authorController,
+                          hintText: 'Author Name',
                           keyboardType: TextInputType.text,
                           prefixText: '',
                           inputFormatters: const [],
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'Please enter book name';
+                              return 'Please enter author name';
                             }
                             return null;
-                          }),
-                      const SizedBox(height: 16),
-                      Inputfield(
-                        controller: _authorController,
-                        hintText: 'Author Name',
-                        keyboardType: TextInputType.text,
-                        prefixText: '',
-                        inputFormatters: const [],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter author name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _selectedGenre,
-                        hint: const Text('Select Genre'),
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          },
                         ),
-                        items: _genres.map((String genre) {
-                          return DropdownMenuItem<String>(
-                            value: genre,
-                            child: Text(genre),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedGenre = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a genre';
-                          }
-                          return null;
-                        },
-                      ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: _selectedGenre,
+                          hint: const Text('Select Genre'),
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: _genres.map((String genre) {
+                            return DropdownMenuItem<String>(
+                              value: genre,
+                              child: Text(genre),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setModalState(() {
+                              _selectedGenre = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a genre';
+                            }
+                            return null;
+                          },
+                        ),
+                      ] else ...[
+                        // Book selection from library
+                        SearchField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            setModalState(() {
+                              _searchQuery = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        if (ownedBooks.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'No books available in your library.\nAdd books first or use "Add New Book" option.',
+                                style: TextStyle(color: Colors.grey),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            height: 250,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(8),
+                              itemCount: ownedBooks.length,
+                              itemBuilder: (context, index) {
+                                final book = ownedBooks[index];
+                                final isSelected =
+                                    _selectedBook?.key == book.key;
+
+                                return _buildSelectableBookTile(
+                                  book,
+                                  isSelected,
+                                  (selectedBook) {
+                                    setModalState(() {
+                                      _selectedBook = selectedBook;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+
                       const SizedBox(height: 16),
                       Inputfield(
                         controller: _personController,
@@ -268,6 +551,13 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     );
   }
 
+  void _clearFormFields() {
+    _selectedBook = null;
+    _bookTitleController.clear();
+    _authorController.clear();
+    _selectedGenre = null;
+  }
+
   void _returnBook(Book book) {
     showDialog(
       context: context,
@@ -284,6 +574,8 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
               final returnedBook = book.returnBook();
               Provider.of<BookProvider>(context, listen: false)
                   .updateBook(returnedBook);
+              Provider.of<BookProvider>(context, listen: false)
+                  .deleteBook(returnedBook);
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('${book.title} returned successfully!')),
@@ -296,10 +588,10 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
     );
   }
 
-  Widget _buildLentBookCard(Book book) {
+  Widget _buildBorrowedBookCard(Book book) {
     final isOverdue = book.isOverdue;
-    final daysSinceLent = book.lentDate != null
-        ? DateTime.now().difference(book.lentDate!).inDays
+    final daysSinceBorrowed = book.borrowedDate != null
+        ? DateTime.now().difference(book.borrowedDate!).inDays
         : 0;
 
     return Card(
@@ -331,15 +623,15 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
                 Icon(Icons.person, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 4),
                 Text(
-                  'Lent to ${book.lentToPersonName}',
+                  'Borrowed from ${book.borrowedFromPersonName}',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ],
             ),
             const SizedBox(height: 2),
             Text(
-              book.lentDate != null
-                  ? 'Borrowed $daysSinceLent days ago'
+              book.borrowedDate != null
+                  ? 'Borrowed $daysSinceBorrowed days ago'
                   : 'Recently borrowed',
               style: TextStyle(
                 color: Colors.grey[600],
@@ -409,8 +701,18 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
   Widget build(BuildContext context) {
     final bookProvider = Provider.of<BookProvider>(context);
     final borrowedBooks = bookProvider.books
-        .where((book) => book.status == BookStatus.lent)
+        .where((book) => book.status == BookStatus.borrowed)
         .toList();
+
+    // Sort borrowed books - overdue first, then by borrowed date
+    borrowedBooks.sort((a, b) {
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+      if (a.borrowedDate != null && b.borrowedDate != null) {
+        return b.borrowedDate!.compareTo(a.borrowedDate!);
+      }
+      return 0;
+    });
 
     return Scaffold(
       body: Padding(
@@ -418,9 +720,25 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_justBorrowedBook != null)
+              FadeTransition(
+                opacity: _tileFadeAnimation,
+                child: GestureDetector(
+                  onTap: () {
+                    _tileAnimController.reverse().then((_) {
+                      if (mounted) setState(() => _justBorrowedBook = null);
+                    });
+                  },
+                  child: CustomBookTile(
+                    book: _justBorrowedBook!,
+                    showStatus: true,
+                  ),
+                ),
+              ),
+            if (_justBorrowedBook != null) const SizedBox(height: 12),
             if (borrowedBooks.isNotEmpty) ...[
               Text(
-                'Books Currently Lent (${borrowedBooks.length})',
+                'Books Currently Borrowed (${borrowedBooks.length})',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -441,7 +759,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
                               style:
                                   TextStyle(fontSize: 16, color: Colors.grey)),
                           SizedBox(height: 8),
-                          Text("Tap + to borrow a book ",
+                          Text("Tap + to borrow a book",
                               style:
                                   TextStyle(fontSize: 14, color: Colors.grey)),
                         ],
@@ -451,7 +769,7 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
                       controller: _scrollController,
                       itemCount: borrowedBooks.length,
                       itemBuilder: (ctx, index) {
-                        return _buildLentBookCard(borrowedBooks[index]);
+                        return _buildBorrowedBookCard(borrowedBooks[index]);
                       },
                     ),
             ),
@@ -460,8 +778,20 @@ class _BorrowedBooksScreenState extends State<BorrowedBooksScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openBorrowedForm,
+        tooltip: 'Borrow a book',
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _personController.dispose();
+    _authorController.dispose();
+    _searchController.dispose();
+    _scrollController.dispose();
+    _bookTitleController.dispose();
+    _tileAnimController.dispose();
+    super.dispose();
   }
 }
